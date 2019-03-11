@@ -10,6 +10,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Plugin.CurrentActivity;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
 using XamarinImage.Droid;
@@ -21,7 +22,7 @@ namespace XamarinImage.Droid
     {
         public void ImageCheck(ImageSource image)
         {
-            var test = GetBitmapFromImageSourceAsync(image, Android.App.Application.Context);
+            var test = GetBitmapFromImageSourceAsync(image, CrossCurrentActivity.Current.AppContext);
             var bitmap = test.Result;
             var result = ImageDivider.PulseDivider(bitmap);
             int i = 0;
@@ -35,13 +36,5 @@ namespace XamarinImage.Droid
             returnValue = await handler.LoadImageAsync(source, context);
             return returnValue;
         }
-
-        //public static async Task<Bitmap> GetBitmapFromImageSourceAsync(ImageSource source, Context context)
-        //{
-        //    var handler = GetHandler(source);
-        //    var returnValue = (Bitmap)null;
-        //    returnValue = await handler.LoadImageAsync(source, context);
-        //    return returnValue;
-        //}
     }
 }

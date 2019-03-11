@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 
@@ -11,6 +10,7 @@ using Android.OS;
 using Android.Runtime;
 using Android.Views;
 using Android.Widget;
+using Xamarin.Forms;
 using Color = Android.Graphics.Color;
 
 namespace XamarinImage.Droid
@@ -21,7 +21,7 @@ namespace XamarinImage.Droid
         static Rectangle pressureRect = new Rectangle(102, 284, 572, 251); //102,283,674,534 Зона давление
         static public List<int> PulseDivider(Bitmap bmp)
         {
-            var pulsePoints = FindPeaks(Bitmap.CreateBitmap(bmp,pulseRect.X, pulseRect.Y, pulseRect.Width, pulseRect.Height), Color.Rgb(225, 225, 225));
+            var pulsePoints = FindPeaks(Bitmap.CreateBitmap(bmp,(int)pulseRect.X, (int)pulseRect.Y, (int)pulseRect.Width, (int)pulseRect.Height), Color.Rgb(225, 225, 225));
             return PulseDivider(pulsePoints);
         }
         //static public List<Tuple<int, int>> PressureDivider(Bitmap bmp)
