@@ -10,7 +10,8 @@ namespace XamarinImage
 {
 	public class MainPage : ContentPage
 	{
-		public MainPage ()
+        ImageSource img;
+        public MainPage ()
 		{
             //         ImageSource testImage = Device.RuntimePlatform == Device.Android ? ImageSource.FromFile("test1.jpg") : ImageSource.FromFile("Images/test1.jpg");
             //         //Bitmap bitmap = new Bitmap(testImage);
@@ -30,13 +31,15 @@ namespace XamarinImage
             //	}
             //};
 
-            var webImage = new Image { Aspect = Aspect.AspectFit };
+            var webImage = new Image() { VerticalOptions = LayoutOptions.FillAndExpand, HorizontalOptions = LayoutOptions.FillAndExpand };
 
             //ImageSource img = ImageSource.FromUri(new Uri("http://xamarin.com/content/images/pages/forms/example-app.png"));
-            ImageSource img = ImageSource.FromUri(new Uri("https://pp.userapi.com/c849432/v849432519/122051/DgB4RT4VEDQ.jpg"));
+            img = ImageSource.FromUri(new Uri("https://pp.userapi.com/c849432/v849432519/122051/DgB4RT4VEDQ.jpg"));
+            Button button = new Button() { Text = "ConvertImageSource",VerticalOptions = LayoutOptions.FillAndExpand };
+            button.Clicked += Button_ClickedAsync;
             webImage.Source = img;
 
-            DependencyService.Get<IImageWorker>().ImageCheck(img);
+            
 
             Content = new StackLayout
             {
@@ -46,8 +49,14 @@ namespace XamarinImage
                         FontSize = Device.GetNamedSize (NamedSize.Medium, typeof(Label)),
                         FontAttributes = FontAttributes.Bold
                     },
+                    new StackLayout()
+                    {
+                        Spacing = 0,
+                        Orientation = StackOrientation.Horizontal,
+                        Children = { button, new Label { Text = "example-app.png gets downloaded from xamarin.com" } }
+                    },
                     webImage,
-                    new Label { Text = "example-app.png gets downloaded from xamarin.com" }
+                    
                 },
                 Padding = new Thickness(0, 20, 0, 0),
                 VerticalOptions = LayoutOptions.StartAndExpand,
@@ -56,6 +65,11 @@ namespace XamarinImage
 
 
 
+        }
+
+        private async void Button_ClickedAsync(object sender, EventArgs e)
+        {
+            var list = await DependencyService.Get<IImageWorker>().ImageCheck(img);
         }
         //public static ImageSource ConvertBitmap(Bitmap source)
         //{

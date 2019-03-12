@@ -20,13 +20,11 @@ namespace XamarinImage.Droid
 {
     public class ImageWorker_Droid : IImageWorker
     {
-        public void ImageCheck(ImageSource image)
+        Context context = Android.App.Application.Context;
+
+        async Task<Bitmap> tempFuncAsync(ImageSource image)
         {
-            var test = GetBitmapFromImageSourceAsync(image, CrossCurrentActivity.Current.AppContext);
-            var bitmap = test.Result;
-            var result = ImageDivider.PulseDivider(bitmap);
-            int i = 0;
-            i++;
+            return await AndroidImageHelper.GetBitmapFromImageSourceAsync(image, Android.App.Application.Context);
         }
 
         public static async Task<Bitmap> GetBitmapFromImageSourceAsync(ImageSource source, Context context)
@@ -35,6 +33,15 @@ namespace XamarinImage.Droid
             var returnValue = (Bitmap)null;
             returnValue = await handler.LoadImageAsync(source, context);
             return returnValue;
+        }
+
+        async Task<List<int>> IImageWorker.ImageCheck(ImageSource image)
+        {
+
+            Bitmap bmp = await tempFuncAsync(image);
+            var result = ImageDivider.PulseDivider(bmp);
+
+            return result;
         }
     }
 }
