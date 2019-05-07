@@ -35,11 +35,18 @@ namespace XamarinImage.Droid
             return returnValue;
         }
 
-        async Task<List<int>> IImageWorker.ImageCheck(ImageSource image)
+        public async Task<List<Tuple<int, Tuple<int, int>>>> PulseDivider(ImageSource image)
         {
-
             Bitmap bmp = await tempFuncAsync(image);
             var result = ImageDivider.PulseDivider(bmp);
+
+            return result;
+        }
+
+        public async Task<List<Tuple<int, int, Tuple<int, int>>>> PressureDivider(ImageSource image)
+        {
+            Bitmap bmp = await tempFuncAsync(image);
+            var result = ImageDivider.PressureDivider(bmp);
 
             return result;
         }

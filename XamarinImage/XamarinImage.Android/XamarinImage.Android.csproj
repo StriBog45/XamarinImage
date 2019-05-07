@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AndroidImageHelper.cs" />
+    <Compile Include="FileWorker_Droid.cs" />
     <Compile Include="ImageDivider.cs" />
     <Compile Include="ImageExtension_Droid.cs" />
     <Compile Include="ImageWorker_Droid.cs" />

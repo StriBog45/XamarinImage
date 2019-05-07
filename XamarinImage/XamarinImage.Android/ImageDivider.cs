@@ -19,22 +19,11 @@ namespace XamarinImage.Droid
     {
         static Rectangle pulseRect = new Rectangle(46, 264, 628, 214); //46,264,674,478 Зона пульс
         static Rectangle pressureRect = new Rectangle(102, 284, 572, 251); //102,283,674,534 Зона давление
-        static public List<int> PulseDivider(Bitmap bmp)
+        static public List<Tuple<int, Tuple<int, int>>> PulseDivider(Bitmap bmp)
         {
             var pulsePoints = FindPeaks(Bitmap.CreateBitmap(bmp,(int)pulseRect.X, (int)pulseRect.Y, (int)pulseRect.Width, (int)pulseRect.Height), Color.Rgb(225, 225, 225));
             return PulseDivider(pulsePoints);
         }
-        //static public List<Tuple<int, int>> PressureDivider(Bitmap bmp)
-        //{
-        //    var pressurePoints = FindPressurePeaks(bmp.Clone(pressureRect, bmp.PixelFormat), Color.FromArgb(225, 225, 225));
-
-        //    List<Tuple<int, int>> pressureDate = new List<Tuple<int, int>>();
-        //    foreach (var point in pressurePoints)
-        //    {
-        //        pressureDate.Add(Tuple.Create(PressureDivider(point.Item1.Item2), PressureDivider(point.Item2.Item2)));
-        //    }
-        //    return pressureDate;
-        //}
         static List<Tuple<int, int>> FindPeaks(Bitmap bmp, Color color)
         {
             List<Tuple<int, int>> pulsePoints = new List<Tuple<int, int>>();
@@ -51,12 +40,22 @@ namespace XamarinImage.Droid
                                 y--;
                             }
                         }
+                        
+                        var extraX = x;
+                        int resultX = x;
+
+                        while (extraX - 1 > 0 &&
+                            (Color.GetGreenComponent( bmp.GetPixel(extraX - 1, y)) >= color.G && Color.GetRedComponent( bmp.GetPixel(extraX - 1, y)) >= color.R && Color.GetBlueComponent( bmp.GetPixel(extraX - 1, y)) >= color.B))
+                            extraX--;
+                        if (extraX + 2 < x)
+                            resultX = (extraX + x) / 2;
+
                         if (pulsePoints.Count == 0)
-                            pulsePoints.Add(Tuple.Create(x, bmp.Height - y));
+                            pulsePoints.Add(Tuple.Create(extraX, bmp.Height - y));
                         else
                             if (pulsePoints[pulsePoints.Count - 1].Item1 < x - 7) // избавляемся от повторных точек в одной окружности
                         {
-                            pulsePoints.Add(Tuple.Create(x, bmp.Height - y));
+                            pulsePoints.Add(Tuple.Create(extraX, bmp.Height - y));
                         }
                         x += 5;
                         break;
@@ -64,11 +63,13 @@ namespace XamarinImage.Droid
                 }
             return pulsePoints;
         }
-        static List<int> PulseDivider(List<Tuple<int, int>> points)
+        static List<Tuple<int, Tuple<int, int>>> PulseDivider(List<Tuple<int, int>> points)
         {
-            List<int> pulseDate = new List<int>();
+            List<Tuple<int, Tuple<int, int>>> pulseDate = new List<Tuple<int, Tuple<int, int>>>();
             foreach (var point in points)
             {
+
+                //pulse
                 double result = 0;
                 if (point.Item2 >= 100)
                     result = point.Item2 / 1.11;
@@ -80,7 +81,19 @@ namespace XamarinImage.Droid
                     result = point.Item2 / 1.14;
                 else
                     result = point.Item2 / 1.17;
-                pulseDate.Add((int)result);
+
+                //time
+
+                //int hour = (point.Item1 / 13)/2;
+                //int minute = (((int)(point.Item1 / 13)) % 2) > 0 ? 30 : 0;
+
+                //1440 минут / 628 пикселей 2,293 минуты в пикселе, сдвиг ~8 минут
+                int hour = (int)(((point.Item1 * 2.293) - 8) / 60);
+                int minute = (int)(((point.Item1 * 2.293) - 8) % 60);
+
+                var time = Tuple.Create(hour, minute);
+
+                pulseDate.Add(Tuple.Create((int)result, time));
             }
 
             return pulseDate;
@@ -115,33 +128,62 @@ namespace XamarinImage.Droid
 
             return (int)result;
         }
-        //static List<Tuple<Tuple<int, int>, Tuple<int, int>>> FindPressurePeaks(Bitmap bmp, Color color)
-        //{
-        //    List<Tuple<Tuple<int, int>, Tuple<int, int>>> pressurePoints = new List<Tuple<Tuple<int, int>, Tuple<int, int>>>();
-        //    for (int x = 0; x < bmp.Width; x++)
-        //        for (int y = 0; y < bmp.Height && x < bmp.Width; y++)
-        //        {
-        //            if (Color.GetGreenComponent(bmp.GetPixel(x, y)) >= color.G && bmp.GetPixel(x, y).R >= color.R && bmp.GetPixel(x, y).B >= color.B)
-        //            {
-        //                while (x + 1 < bmp.Width && (bmp.GetPixel(x + 1, y).G >= color.G && bmp.GetPixel(x + 1, y).R >= color.R && bmp.GetPixel(x + 1, y).B >= color.B))
-        //                {
-        //                    x++;
-        //                    while (y > 0 && (bmp.GetPixel(x, y - 1).G >= color.G && bmp.GetPixel(x, y - 1).R >= color.R && bmp.GetPixel(x, y - 1).B >= color.B))
-        //                        y--;
-        //                }
-        //                var topPoint = Tuple.Create(x, bmp.Height - y);
-        //                if (pressurePoints.Count > 0 && pressurePoints[pressurePoints.Count - 1].Item1.Item1 > x - 7) // избавляемся от повторных точек в одной окружности
-        //                    break;
+        static List<Tuple<Tuple<int, int>, Tuple<int, int>>> FindPressurePeaks(Bitmap bmp, Color color)
+        {
+            List<Tuple<Tuple<int, int>, Tuple<int, int>>> pressurePoints = new List<Tuple<Tuple<int, int>, Tuple<int, int>>>();
+            for (int x = 0; x < bmp.Width; x++)
+                for (int y = 0; y < bmp.Height && x < bmp.Width; y++)
+                {
+                    if (Color.GetGreenComponent(bmp.GetPixel(x, y)) >= color.G && Color.GetRedComponent(bmp.GetPixel(x, y)) >= color.R && Color.GetBlueComponent(bmp.GetPixel(x, y)) >= color.B)
+                    {
+                        while (x + 1 < bmp.Width && Color.GetGreenComponent(bmp.GetPixel(x + 1, y)) >= color.G && Color.GetRedComponent(bmp.GetPixel(x + 1, y)) >= color.R && Color.GetBlueComponent(bmp.GetPixel(x + 1, y)) >= color.B)
+                        {
+                            x++;
+                            while (y > 0 && ((Color.GetGreenComponent(bmp.GetPixel(x, y - 1))) >= color.G && Color.GetRedComponent( bmp.GetPixel(x, y - 1)) >= color.R && Color.GetBlueComponent( bmp.GetPixel(x, y - 1)) >= color.B))
+                                y--;
+                        }
+                        // выравнивание точки на центр по оси x
+                        var extraX = x;
+                        int resultX = x;
 
-        //                while (y < bmp.Height && (bmp.GetPixel(x, y + 1).G >= color.G && bmp.GetPixel(x, y + 1).R >= color.R && bmp.GetPixel(x, y + 1).B >= color.B))
-        //                    y++;
-        //                var downPoint = Tuple.Create(x, bmp.Height - y);
-        //                pressurePoints.Add(Tuple.Create(topPoint, downPoint));
-        //                x += 5;
-        //                break;
-        //            }
-        //        }
-        //    return pressurePoints;
-        //}
+                        while (extraX - 1 > 0 &&
+                            (Color.GetGreenComponent(bmp.GetPixel(extraX - 1, y)) >= color.G && Color.GetRedComponent(bmp.GetPixel(extraX - 1, y)) >= color.R &&  Color.GetBlueComponent(bmp.GetPixel(extraX - 1, y)) >= color.B))
+                            extraX--;
+                        if (extraX + 2 < x)
+                            resultX = (extraX + x) / 2;
+
+                        var topPoint = Tuple.Create(extraX, bmp.Height - y);
+                        if (pressurePoints.Count > 0 && pressurePoints[pressurePoints.Count - 1].Item1.Item1 > x - 7) // избавляемся от повторных точек в одной окружности
+                            break;
+
+                        while (y < bmp.Height && (Color.GetGreenComponent(bmp.GetPixel(x, y + 1)) >= color.G && Color.GetRedComponent(bmp.GetPixel(x, y + 1)) >= color.R && Color.GetBlueComponent(bmp.GetPixel(x, y + 1)) >= color.B))
+                            y++;
+                        var downPoint = Tuple.Create(extraX, bmp.Height - y);
+                        pressurePoints.Add(Tuple.Create(topPoint, downPoint));
+                        x += 5;
+                        break;
+                    }
+                }
+            return pressurePoints;
+        }
+        static public List<Tuple<int, int, Tuple<int, int>>> PressureDivider(Bitmap bmp)
+        {
+            var pressurePoints = FindPressurePeaks(Bitmap.CreateBitmap(bmp,(int)pressureRect.X, (int)pressureRect.Y, (int)pressureRect.Width, (int)pressureRect.Height), Color.Rgb(225, 225, 225));
+
+            List<Tuple<int, int, Tuple<int, int>>> pressureDate = new List<Tuple<int, int, Tuple<int, int>>>();
+            foreach (var point in pressurePoints)
+            {
+                pressureDate.Add(Tuple.Create(PressureDivider(point.Item1.Item2), PressureDivider(point.Item2.Item2), PressureTimeDivier(point.Item1.Item1)));
+            }
+            return pressureDate;
+        }
+        private static Tuple<int, int> PressureTimeDivier(int x)
+        {
+            //1440 минут / 572 пикселей 2,517 минуты в пикселе, сдвиг ~ +15 минут
+            int hour = (int)(((x * 2.217) + 15) / 60);
+            int minute = (int)(((x * 2.217) + 15) % 60);
+
+            return Tuple.Create(hour, minute);
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace XamarinImage
 {
 	public class MainPage : ContentPage
 	{
-        ImageSource img;
+        ImageSource img = ImageSource.FromUri(new Uri("http://xamarin.com/content/images/pages/forms/example-app.png"));
         public MainPage ()
 		{
             //         ImageSource testImage = Device.RuntimePlatform == Device.Android ? ImageSource.FromFile("test1.jpg") : ImageSource.FromFile("Images/test1.jpg");
@@ -32,29 +32,24 @@ namespace XamarinImage
             //};
 
             var webImage = new Image() { VerticalOptions = LayoutOptions.FillAndExpand, HorizontalOptions = LayoutOptions.FillAndExpand };
-
-            //ImageSource img = ImageSource.FromUri(new Uri("http://xamarin.com/content/images/pages/forms/example-app.png"));
-            img = ImageSource.FromUri(new Uri("https://pp.userapi.com/c849432/v849432519/122051/DgB4RT4VEDQ.jpg"));
             Button button = new Button() { Text = "ConvertImageSource",VerticalOptions = LayoutOptions.FillAndExpand };
             button.Clicked += Button_ClickedAsync;
+            Button buttonPulse = new Button() { Text = "Pulse From Image", VerticalOptions = LayoutOptions.FillAndExpand };
+            buttonPulse.Clicked += ButtonPulse_ClickedAsync;
+            Button buttonPressure = new Button() { Text = "Pressure From Image", VerticalOptions = LayoutOptions.FillAndExpand };
+            buttonPressure.Clicked += ButtonPressure_ClickedAsync;
             webImage.Source = img;
-
-            
 
             Content = new StackLayout
             {
                 Children = {
-                    new Label {
-                        Text = "ImageSource.FromUri",
-                        FontSize = Device.GetNamedSize (NamedSize.Medium, typeof(Label)),
-                        FontAttributes = FontAttributes.Bold
-                    },
                     new StackLayout()
                     {
                         Spacing = 0,
                         Orientation = StackOrientation.Horizontal,
-                        Children = { button, new Label { Text = "example-app.png gets downloaded from xamarin.com" } }
                     },
+                    buttonPulse,
+                    buttonPressure,
                     webImage,
                     
                 },
@@ -67,30 +62,19 @@ namespace XamarinImage
 
         }
 
+        private async void ButtonPressure_ClickedAsync(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new PressurePage());
+        }
+
+        private async void ButtonPulse_ClickedAsync(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new PulsePage());
+        }
+
         private async void Button_ClickedAsync(object sender, EventArgs e)
         {
-            var list = await DependencyService.Get<IImageWorker>().ImageCheck(img);
+            var list = await DependencyService.Get<IImageWorker>().PulseDivider(img);
         }
-        //public static ImageSource ConvertBitmap(Bitmap source)
-        //{
-        //    return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-        //             source.GetHbitmap(),
-        //            IntPtr.Zero,
-        //            Int32Rect.Empty,
-        //            BitmapSizeOptions.FromEmptyOptions());
-        //}
-
-        //public static Bitmap BitmapFromSource(BitmapSource bitmapsource)
-        //{
-        //    Bitmap bitmap;
-        //    using (var outStream = new MemoryStream())
-        //    {
-        //        BitmapEncoder enc = new BmpBitmapEncoder();
-        //        enc.Frames.Add(BitmapFrame.Create(bitmapsource));
-        //        enc.Save(outStream);
-        //        bitmap = new Bitmap(outStream);
-        //    }
-        //    return bitmap;
-        //}
     }
 }

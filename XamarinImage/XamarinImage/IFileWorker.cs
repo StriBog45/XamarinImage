@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 
 namespace XamarinImage
 {
-    public interface IImageWorker
+    public interface IFileWorker
     {
-        Task<List<Tuple<int, Tuple<int, int>>>> PulseDivider(Xamarin.Forms.ImageSource image);
-        Task<List<Tuple<int, int, Tuple<int, int>>>> PressureDivider(Xamarin.Forms.ImageSource image);
-
+        Task<string> GetPath(string filename);  // получить путь
         //Task<bool> ExistsAsync(string filename); // проверка существования файла
         //Task SaveTextAsync(string filename, string text);   // сохранение текста в файл
         //Task<string> LoadTextAsync(string filename);  // загрузка текста из файла
