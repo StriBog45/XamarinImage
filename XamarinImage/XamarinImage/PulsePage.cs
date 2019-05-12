@@ -8,6 +8,7 @@ using SkiaSharp;
 using Entry = Microcharts.Entry;
 using Microcharts;
 using Microcharts.Forms;
+using System.IO;
 
 namespace XamarinImage
 {
@@ -92,8 +93,16 @@ namespace XamarinImage
 
         private async void ButtonCreateFile_ClickedAsync(object sender, EventArgs e)
         {
-            var path = await DependencyService.Get<IFileWorker>().GetPath("PulseExcel.xlsx");
+            string fileName = "PulseExcel";
+            var path = await DependencyService.Get<IFileWorker>().GetPath(String.Format("{0}.xlsx", fileName));
             var list = await DependencyService.Get<IImageWorker>().PulseDivider(img);
+            int i = 0;
+            
+            while(File.Exists(path))
+            {
+                i++;
+                path = await DependencyService.Get<IFileWorker>().GetPath(String.Format("{0}({1}).xlsx",fileName,i));
+            }
             ExcelHelper.DataTableToExcel(ExcelHelper.MakeTable(list), path);
         }
 

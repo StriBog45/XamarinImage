@@ -51,11 +51,11 @@ namespace XamarinImage.Droid
                             resultX = (extraX + x) / 2;
 
                         if (pulsePoints.Count == 0)
-                            pulsePoints.Add(Tuple.Create(extraX, bmp.Height - y));
+                            pulsePoints.Add(Tuple.Create(resultX, bmp.Height - y));
                         else
                             if (pulsePoints[pulsePoints.Count - 1].Item1 < x - 7) // избавляемся от повторных точек в одной окружности
                         {
-                            pulsePoints.Add(Tuple.Create(extraX, bmp.Height - y));
+                            pulsePoints.Add(Tuple.Create(resultX, bmp.Height - y));
                         }
                         x += 5;
                         break;
@@ -68,10 +68,13 @@ namespace XamarinImage.Droid
             List<Tuple<int, Tuple<int, int>>> pulseDate = new List<Tuple<int, Tuple<int, int>>>();
             foreach (var point in points)
             {
-
                 //pulse
                 double result = 0;
-                if (point.Item2 >= 100)
+                if (point.Item2 >= 110)
+                    result = point.Item2 / 1.08;
+                else if (point.Item2 >= 105)
+                    result = point.Item2 / 1.1;
+                else if (point.Item2 >= 100)
                     result = point.Item2 / 1.11;
                 else if (point.Item2 >= 95)
                     result = point.Item2 / 1.12;
@@ -83,7 +86,6 @@ namespace XamarinImage.Droid
                     result = point.Item2 / 1.17;
 
                 //time
-
                 //int hour = (point.Item1 / 13)/2;
                 //int minute = (((int)(point.Item1 / 13)) % 2) > 0 ? 30 : 0;
 
@@ -91,7 +93,7 @@ namespace XamarinImage.Droid
                 int hour = (int)(((point.Item1 * 2.293) - 8) / 60);
                 int minute = (int)(((point.Item1 * 2.293) - 8) % 60);
 
-                var time = Tuple.Create(hour, minute);
+                var time = Tuple.Create(hour, MinuteRoundOff(minute));
 
                 pulseDate.Add(Tuple.Create((int)result, time));
             }
@@ -113,18 +115,32 @@ namespace XamarinImage.Droid
                 result = height / 0.97;
             else if (height >= 95)
                 result = height / 0.96;
+            else if (height >= 90)
+                result = height / 0.98;
             else if (height >= 85)
-                result = height / 0.94;
+                result = height / 0.98;
+            else if (height >= 80)
+                result = height / 0.97;
             else if (height >= 75)
-                result = height / 0.9;
-            else if (height >= 65)
-                result = height / 0.86;
-            else if (height >= 55)
-                result = height / 0.83;
-            else if (height >= 45)
-                result = height / 0.80;
-            else if (height >= 35)
-                result = height / 0.75;
+                result = height / 0.96;
+            else if (height >= 70)
+                result = height / 0.94;
+            else if (height >= 60)
+                result = height / 0.92;
+
+            //old
+            //else if (height >= 85)
+            //    result = height / 0.94;
+            //else if (height >= 75)
+            //    result = height / 0.9;
+            //else if (height >= 65)
+            //    result = height / 0.86;
+            //else if (height >= 55)
+            //    result = height / 0.83;
+            //else if (height >= 45)
+            //    result = height / 0.80;
+            //else if (height >= 35)
+            //    result = height / 0.75;
 
             return (int)result;
         }
@@ -152,13 +168,14 @@ namespace XamarinImage.Droid
                         if (extraX + 2 < x)
                             resultX = (extraX + x) / 2;
 
-                        var topPoint = Tuple.Create(extraX, bmp.Height - y);
-                        if (pressurePoints.Count > 0 && pressurePoints[pressurePoints.Count - 1].Item1.Item1 > x - 7) // избавляемся от повторных точек в одной окружности
+                        var topPoint = Tuple.Create(resultX, bmp.Height - y);
+                        if (pressurePoints.Count > 0 && pressurePoints[pressurePoints.Count - 1].Item1.Item1 > resultX - 7) // избавляемся от повторных точек в одной окружности
                             break;
 
-                        while (y < bmp.Height && (Color.GetGreenComponent(bmp.GetPixel(x, y + 1)) >= color.G && Color.GetRedComponent(bmp.GetPixel(x, y + 1)) >= color.R && Color.GetBlueComponent(bmp.GetPixel(x, y + 1)) >= color.B))
+                        while (y < bmp.Height && (Color.GetGreenComponent(bmp.GetPixel(resultX, y + 1)) >= color.G && Color.GetRedComponent(bmp.GetPixel(resultX, y + 1)) >= color.R && Color.GetBlueComponent(bmp.GetPixel(resultX, y + 1)) >= color.B))
                             y++;
-                        var downPoint = Tuple.Create(extraX, bmp.Height - y);
+                        y -= 8;
+                        var downPoint = Tuple.Create(resultX, bmp.Height - y);
                         pressurePoints.Add(Tuple.Create(topPoint, downPoint));
                         x += 5;
                         break;
@@ -184,6 +201,18 @@ namespace XamarinImage.Droid
             int minute = (int)(((x * 2.217) + 15) % 60);
 
             return Tuple.Create(hour, minute);
+        }
+        static int MinuteRoundOff(int minute)
+        {
+            var result = minute;
+            if (minute != 0 || minute != 30)
+            {
+                if (minute > 30)
+                    result = 30;
+                else
+                    result = 0;
+            }
+            return result;
         }
     }
 }

@@ -7,6 +7,8 @@ using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
 using NPOI.XSSF.UserModel;
 using System.IO;
+using NPOI.SS.UserModel.Charts;
+using NPOI.SS.Util;
 
 namespace XamarinImage
 {
@@ -21,16 +23,7 @@ namespace XamarinImage
             DataRow row;
 
             // Create new DataColumn, set DataType, 
-            // ColumnName and add to DataTable.    
-            column = new DataColumn();
-            column.DataType = System.Type.GetType("System.Int32");
-            column.ColumnName = "id";
-            column.ReadOnly = true;
-            column.Unique = true;
-            // Add the Column to the DataColumnCollection.
-            table.Columns.Add(column);
 
-            // Create second column.
             column = new DataColumn();
             column.DataType = System.Type.GetType("System.Int32");
             column.ColumnName = "Pulse";
@@ -38,10 +31,8 @@ namespace XamarinImage
             column.Caption = "Pulse";
             column.ReadOnly = false;
             column.Unique = false;
-            // Add the column to the table.
             table.Columns.Add(column);
 
-            // Create second column.
             column = new DataColumn();
             column.DataType = System.Type.GetType("System.Int32");
             column.ColumnName = "Time";
@@ -49,13 +40,12 @@ namespace XamarinImage
             column.Caption = "Time";
             column.ReadOnly = false;
             column.Unique = false;
-            // Add the column to the table.
             table.Columns.Add(column);
 
             // Make the ID column the primary key column.
-            DataColumn[] PrimaryKeyColumns = new DataColumn[1];
-            PrimaryKeyColumns[0] = table.Columns["id"];
-            table.PrimaryKey = PrimaryKeyColumns;
+            //DataColumn[] PrimaryKeyColumns = new DataColumn[1];
+            //PrimaryKeyColumns[0] = table.Columns["id"];
+            //table.PrimaryKey = PrimaryKeyColumns;
 
             // Instantiate the DataSet variable.
             var dataSet = new DataSet();
@@ -67,7 +57,6 @@ namespace XamarinImage
             for (int i = 0; i < list.Count; i++)
             {
                 row = table.NewRow();
-                row["id"] = i;
                 row["Pulse"] = list[i].Item1;
                 row["Time"] = list[i].Item2.Item1 * 60 + list[i].Item2.Item2;
                 table.Rows.Add(row);
@@ -191,20 +180,11 @@ namespace XamarinImage
                         }
 
                         //FORMATOS PARA CIERTOS TIPOS DE DATOS
-                        ICellStyle _doubleCellStyle = workbook.CreateCellStyle();
-                        _doubleCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.###");
+                        //ICellStyle _doubleCellStyle = workbook.CreateCellStyle();
+                        //_doubleCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.###");
 
-                        ICellStyle _intCellStyle = workbook.CreateCellStyle();
-                        _intCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0");
-
-                        ICellStyle _boolCellStyle = workbook.CreateCellStyle();
-                        _boolCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("BOOLEAN");
-
-                        ICellStyle _dateCellStyle = workbook.CreateCellStyle();
-                        _dateCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("dd-MM-yyyy");
-
-                        ICellStyle _dateTimeCellStyle = workbook.CreateCellStyle();
-                        _dateTimeCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("dd-MM-yyyy HH:mm:ss");
+                        //ICellStyle _intCellStyle = workbook.CreateCellStyle();
+                        //_intCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0");
 
                         //AHORA CREAR UNA FILA POR CADA REGISTRO DE LA TABLA
                         foreach (DataRow row in pDatos.Rows)
@@ -218,18 +198,6 @@ namespace XamarinImage
 
                                 switch (column.DataType.ToString())
                                 {
-                                    case "System.Boolean":
-                                        if (cellValue != DBNull.Value)
-                                        {
-                                            cell = fila.CreateCell(iCol, CellType.Boolean);
-
-                                            if (Convert.ToBoolean(cellValue)) { cell.SetCellFormula("TRUE()"); }
-                                            else { cell.SetCellFormula("FALSE()"); }
-
-                                            cell.CellStyle = _boolCellStyle;
-                                        }
-                                        break;
-
                                     case "System.String":
                                         if (cellValue != DBNull.Value)
                                         {
@@ -243,7 +211,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToInt32(cellValue));
-                                            cell.CellStyle = _intCellStyle;
+                                            //cell.CellStyle = _intCellStyle;
                                         }
                                         break;
                                     case "System.Int64":
@@ -251,7 +219,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToInt64(cellValue));
-                                            cell.CellStyle = _intCellStyle;
+                                            //cell.CellStyle = _intCellStyle;
                                         }
                                         break;
                                     case "System.Decimal":
@@ -259,7 +227,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToDouble(cellValue));
-                                            cell.CellStyle = _doubleCellStyle;
+                                            //cell.CellStyle = _doubleCellStyle;
                                         }
                                         break;
                                     case "System.Double":
@@ -267,20 +235,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToDouble(cellValue));
-                                            cell.CellStyle = _doubleCellStyle;
-                                        }
-                                        break;
-
-                                    case "System.DateTime":
-                                        if (cellValue != DBNull.Value)
-                                        {
-                                            cell = fila.CreateCell(iCol, CellType.Numeric);
-                                            cell.SetCellValue(Convert.ToDateTime(cellValue));
-
-                                            //Si No tiene valor de Hora, usar formato dd-MM-yyyy
-                                            DateTime cDate = Convert.ToDateTime(cellValue);
-                                            if (cDate != null && cDate.Hour > 0) { cell.CellStyle = _dateTimeCellStyle; }
-                                            else { cell.CellStyle = _dateCellStyle; }
+                                            //cell.CellStyle = _doubleCellStyle;
                                         }
                                         break;
                                     default:
@@ -291,6 +246,14 @@ namespace XamarinImage
                             iRow++;
                         }
 
+                        IDrawing drawing = worksheet.CreateDrawingPatriarch();
+                        int colLeft = 0;
+                        int rowTop = 0;
+                        int colRight = 6;
+                        int rowDown = 10;
+                        IClientAnchor anchor1 = drawing.CreateAnchor(0, 0, 0, 0, colLeft, rowTop, colRight, rowDown);
+                        CreateChart(drawing, worksheet, anchor1, "title1", "title2");
+
                         workbook.Write(stream);
                         stream.Close();
                     }
@@ -300,6 +263,35 @@ namespace XamarinImage
             {
                 throw ex;
             }
+        }
+        static void CreateChart(IDrawing drawing, ISheet sheet, IClientAnchor anchor, string serie1, string serie2)
+        {
+            IChart chart = drawing.CreateChart(anchor);
+            IChartLegend legend = chart.GetOrCreateLegend();
+            legend.Position = LegendPosition.TopRight;
+
+            ILineChartData<double, double> data = chart.ChartDataFactory.CreateLineChartData<double, double>();
+
+            // Use a category axis for the bottom axis.
+            IChartAxis bottomAxis = chart.ChartAxisFactory.CreateCategoryAxis(AxisPosition.Bottom);
+            IValueAxis leftAxis = chart.ChartAxisFactory.CreateValueAxis(AxisPosition.Left);
+            //leftAxis.SetCrosses(AxisCrosses.AutoZero);
+            leftAxis.Minimum = 55;
+            leftAxis.Maximum = 90;
+            int firstRow = 1;
+            int lastRow = 48;
+            int firstCol = 0;
+            int lastCol = 0;
+            IChartDataSource<double> xs = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(1, lastRow, 1, 1));
+            IChartDataSource<double> ys1 = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(firstRow, lastRow, firstCol, lastCol));
+            IChartDataSource<double> ys2 = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(2, 2, 0, 10 - 1));
+
+            var s1 = data.AddSeries(xs, ys1);
+            s1.SetTitle("");
+            //var s2 = data.AddSeries(xs, ys2);
+            //s2.SetTitle(serie2);
+
+            chart.Plot(data, bottomAxis, leftAxis);
         }
     }
 }
