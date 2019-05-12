@@ -9,11 +9,14 @@ using NPOI.XSSF.UserModel;
 using System.IO;
 using NPOI.SS.UserModel.Charts;
 using NPOI.SS.Util;
+using System.Linq;
+using Xamarin.Forms;
 
 namespace XamarinImage
 {
     static public class ExcelHelper
     {
+        static int autocorrelationCount;
         static public DataTable MakeTable(List<Tuple<int, Tuple<int, int>>> list)
         {
             // Create a new DataTable.
@@ -42,25 +45,47 @@ namespace XamarinImage
             column.Unique = false;
             table.Columns.Add(column);
 
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.Int32");
+            column.ColumnName = "Lag";
+            column.AutoIncrement = false;
+            column.Caption = "Lag";
+            column.ReadOnly = false;
+            column.Unique = false;
+            table.Columns.Add(column);
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.Double");
+            column.ColumnName = "Autocorrelation";
+            column.AutoIncrement = false;
+            column.Caption = "Autocorrelation";
+            column.ReadOnly = false;
+            column.Unique = false;
+            table.Columns.Add(column);
+
             // Make the ID column the primary key column.
             //DataColumn[] PrimaryKeyColumns = new DataColumn[1];
             //PrimaryKeyColumns[0] = table.Columns["id"];
             //table.PrimaryKey = PrimaryKeyColumns;
 
-            // Instantiate the DataSet variable.
+            var autocorrelation = RowAnalyzer.Autocorrelation(list.Select(x => (double)x.Item1).ToArray());
+
             var dataSet = new DataSet();
-            // Add the new DataTable to the DataSet.
             dataSet.Tables.Add(table);
 
-            // Create three new DataRow objects and add 
-            // them to the DataTable
             for (int i = 0; i < list.Count; i++)
             {
                 row = table.NewRow();
                 row["Pulse"] = list[i].Item1;
                 row["Time"] = list[i].Item2.Item1 * 60 + list[i].Item2.Item2;
+                if(i < autocorrelation.Count)
+                {
+                    row["Lag"] = i + 1;
+                    row["Autocorrelation"] = autocorrelation[i];
+                }
                 table.Rows.Add(row);
             }
+            autocorrelationCount = autocorrelation.Count;
             return table;
         }
         static public DataTable MakeTable(List<Tuple<int, int, Tuple<int, int>>> list)
@@ -180,8 +205,8 @@ namespace XamarinImage
                         }
 
                         //FORMATOS PARA CIERTOS TIPOS DE DATOS
-                        //ICellStyle _doubleCellStyle = workbook.CreateCellStyle();
-                        //_doubleCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.###");
+                        ICellStyle _doubleCellStyle = workbook.CreateCellStyle();
+                        _doubleCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.###");
 
                         //ICellStyle _intCellStyle = workbook.CreateCellStyle();
                         //_intCellStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0");
@@ -227,7 +252,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToDouble(cellValue));
-                                            //cell.CellStyle = _doubleCellStyle;
+                                            cell.CellStyle = _doubleCellStyle;
                                         }
                                         break;
                                     case "System.Double":
@@ -235,7 +260,7 @@ namespace XamarinImage
                                         {
                                             cell = fila.CreateCell(iCol, CellType.Numeric);
                                             cell.SetCellValue(Convert.ToDouble(cellValue));
-                                            //cell.CellStyle = _doubleCellStyle;
+                                            cell.CellStyle = _doubleCellStyle;
                                         }
                                         break;
                                     default:
@@ -251,8 +276,10 @@ namespace XamarinImage
                         int rowTop = 0;
                         int colRight = 6;
                         int rowDown = 10;
-                        IClientAnchor anchor1 = drawing.CreateAnchor(0, 0, 0, 0, colLeft, rowTop, colRight, rowDown);
-                        CreateChart(drawing, worksheet, anchor1, "title1", "title2");
+                        //IClientAnchor anchorPulse = drawing.CreateAnchor(0, 0, 0, 0, colLeft, rowTop, colRight, rowDown);
+                        //CreateChart(drawing, worksheet, anchorPulse, new ExcelField(1,1,1, pDatos.Rows.Count), new ExcelField(0,1,0, pDatos.Rows.Count));
+                        IClientAnchor anchorAutocor = drawing.CreateAnchor(0, 0, 0, 0, colLeft, 0, colRight, 10);
+                        CreateChart(drawing, worksheet, anchorAutocor, new ExcelField(2,1,2, autocorrelationCount), new ExcelField(3, 1, 3, autocorrelationCount));
 
                         workbook.Write(stream);
                         stream.Close();
@@ -264,7 +291,7 @@ namespace XamarinImage
                 throw ex;
             }
         }
-        static void CreateChart(IDrawing drawing, ISheet sheet, IClientAnchor anchor, string serie1, string serie2)
+        static void CreateChart(IDrawing drawing, ISheet sheet, IClientAnchor anchor, ExcelField xField, ExcelField yField)
         {
             IChart chart = drawing.CreateChart(anchor);
             IChartLegend legend = chart.GetOrCreateLegend();
@@ -278,18 +305,11 @@ namespace XamarinImage
             //leftAxis.SetCrosses(AxisCrosses.AutoZero);
             leftAxis.Minimum = 55;
             leftAxis.Maximum = 90;
-            int firstRow = 1;
-            int lastRow = 48;
-            int firstCol = 0;
-            int lastCol = 0;
-            IChartDataSource<double> xs = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(1, lastRow, 1, 1));
-            IChartDataSource<double> ys1 = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(firstRow, lastRow, firstCol, lastCol));
-            IChartDataSource<double> ys2 = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(2, 2, 0, 10 - 1));
+            IChartDataSource<double> xs = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(xField.Top, xField.Down, xField.Left, xField.Right));
+            IChartDataSource<double> ys1 = DataSources.FromNumericCellRange(sheet, new CellRangeAddress(yField.Top, yField.Down, yField.Left, yField.Right));
 
             var s1 = data.AddSeries(xs, ys1);
             s1.SetTitle("");
-            //var s2 = data.AddSeries(xs, ys2);
-            //s2.SetTitle(serie2);
 
             chart.Plot(data, bottomAxis, leftAxis);
         }
